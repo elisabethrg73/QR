@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Solar Interactivo</title>
+    <style>
+        body {
+            margin: 0;
+            background: #001f3d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-origin: center center;
+        }
+
+        .sun {
+            width: 150px;
+            height: 150px;
+            background-color: #FFCC00;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 10;
+            box-shadow: 0 0 80px rgba(255,165,0,0.7);
+            cursor: pointer;
+        }
+
+        .orbit {
+            position: absolute;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            pointer-events: none; /* Evitar que la órbita interfiera con el clic */
+        }
+
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            pointer-events: auto; /* Habilitar clic en el planeta */
+        }
+
+        .planet:hover {
+            transform: scale(1.1);
+        }
+
+        .planet-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            z-index: 100;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container" id="solarSystem">
+        <div class="sun" id="sun"></div>
+        <div class="planet-info" id="planetInfo">
+            <h3 id="planetName">Planeta</h3>
+            <p id="planetDescription">Información del planeta</p>
+            <p id="planetFunFact"></p> <!-- Dato curioso -->
+        </div>
+    </div>
+
+    <script>
+        const planetsData = [
+            { 
+                name: 'Mercurio', 
+                image: 'https://upload.wikimedia.org/wikipedia/commons/d/d9/Mercury_in_color_-_Prockter07-edit1.jpg',
+                distance: 100, 
+                size: 30,
+                period: 8,
+                description: 'El planeta más cercano al Sol, con temperaturas extremas.',
+                funFact: 'A pesar de ser el planeta más cercano al Sol, Mercurio tiene una rotación muy lenta. Un día en Mercurio (el tiempo que tarda en girar una vez sobre su eje) dura 59 días terrestres, por lo que un día en Mercurio es más largo que un año mercuriano.'
+            },
+            { 
+                name: 'Venus', 
+                image: 'https://upload.wikimedia.org/wikipedia/commons/e/e5/Venus-real_color.jpg',
+                distance: 150, 
+                size: 40,
+                period: 12,
+                description: 'Conocido como la estrella de la mañana, con una atmósfera densa.',
+                funFact: 'Venus es el planeta con el día más largo del sistema solar. Su rotación en su eje es más lenta que su órbita alrededor del Sol, lo que significa que un día en Venus (243 días terrestres) es más largo que un año en Venus (225 días terrestres).'
+            },
+            { 
+                name: 'Tierra', 
+                image: 'https://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg',
+                distance: 200, 
+                size: 50,
+                period: 16,
+                description: 'Nuestro hogar, el único planeta conocido con vida.',
+                funFact: 'La Tierra tiene una inclinación axial de 23.5 grados, lo que causa las estaciones del año. Esta inclinación es responsable de las diferencias de clima en las distintas regiones del planeta a lo largo del año.'
+            },
+            { 
+                name: 'Marte', 
+                image: 'https://upload.wikimedia.org/wikipedia/commons/0/02/OSIRIS_Mars_true_color.jpg',
+                distance: 250, 
+                size: 40,
+                period: 20,
+                description: 'El planeta rojo, con dos lunas pequeñas.',
+                funFact: 'Marte tiene dos lunas pequeñas, Fobos y Deimos. Fobos, la luna más grande, se acerca a Marte a una velocidad tan rápida que eventualmente se estrellará contra el planeta en unos 50 millones de años.'
+            },
+            { 
+                name: 'Júpiter', 
+                image: 'https://upload.wikimedia.org/wikipedia/commons/e/e2/Jupiter.jpg',
+                distance: 300, 
+                size: 80,
+                period: 24,
+                description: 'El planeta más grande, con la Gran Mancha Roja.',
+                funFact: 'Júpiter tiene el campo magnético más fuerte de todos los planetas del sistema solar, y su gravedad es tan fuerte que actúa como un "aspirador" cósmico, protegiendo a la Tierra de cometas y asteroides que de otro modo podrían impactar nuestro planeta.'
+            },
+            { 
+                name: 'Saturno', 
+                image: 'https://static.vecteezy.com/system/resources/thumbnails/032/424/279/small/saturn-space-planet-ai-generative-free-png.png',
+                distance: 350, 
+                size: 75,
+                period: 30,
+                description: 'El planeta con los anillos más famosos.',
+                funFact: 'Saturno tiene más de 80 lunas conocidas. Su luna Titán es la segunda luna más grande del sistema solar y tiene una atmósfera densa que es más parecida a la de la Tierra en cuanto a su composición química.'
+            },
+            { 
+                name: 'Urano', 
+                image: 'https://e7.pngegg.com/pngimages/843/252/png-clipart-neptune-uranus-outer-planets-solar-system-planet-miscellaneous-blue.png',
+                distance: 400, 
+                size: 65,
+                period: 35,
+                description: 'Un gigante helado con una inclinación extrema.',
+                funFact: 'Urano tiene una inclinación axial extremadamente pronunciada de 98 grados, lo que significa que gira casi de lado. Esto provoca estaciones extremas, con largas noches y días de 21 años de duración.'
+            },
+            { 
+                name: 'Neptuno', 
+                image: 'https://upload.wikimedia.org/wikipedia/commons/5/56/Neptune_Full.jpg',
+                distance: 450, 
+                size: 70,
+                period: 40,
+                description: 'El planeta más lejano, con un clima extremadamente frío.',
+                funFact: 'Neptuno tiene vientos extremadamente rápidos, los más fuertes del sistema solar, que pueden alcanzar hasta 2.100 km/h. Además, Neptuno fue el primer planeta cuya existencia fue predicha antes de ser observado directamente, basándose en las perturbaciones gravitacionales de Urano.'
+            }
+        ];
+
+        const solarSystem = document.getElementById('solarSystem');
+        const planetInfo = document.getElementById('planetInfo');
+        const planetName = document.getElementById('planetName');
+        const planetDescription = document.getElementById('planetDescription');
+        const planetFunFact = document.getElementById('planetFunFact');
+
+        let scale = 1;
+
+        function createPlanetSystem() {
+            // Crear el Sol
+            const sunElement = document.getElementById('sun');
+            sunElement.addEventListener('click', () => {
+                planetName.textContent = 'Sol';
+                planetDescription.textContent = 'El Sol es una estrella situada en el centro del Sistema Solar. Es la fuente de luz y energía para los planetas.';
+                planetFunFact.textContent = '';
+                planetInfo.style.display = 'block';
+            });
+
+            // Crear los planetas
+            planetsData.forEach(planet => {
+                // Crear órbita
+                const orbit = document.createElement('div');
+                orbit.classList.add('orbit');
+                orbit.style.width = `${planet.distance * 2}px`;
+                orbit.style.height = `${planet.distance * 2}px`;
+                orbit.style.left = `calc(50% - ${planet.distance}px)`;
+                orbit.style.top = `calc(50% - ${planet.distance}px)`;
+                solarSystem.appendChild(orbit);
+
+                // Crear planeta
+                const planetElement = document.createElement('div');
+                planetElement.classList.add('planet');
+                planetElement.style.width = `${planet.size}px`;
+                planetElement.style.height = `${planet.size}px`;
+                planetElement.style.backgroundImage = `url(${planet.image})`;
+
+                // Animación orbital
+                const style = document.createElement('style');
+                style.innerHTML = `
+                    @keyframes orbit${planet.name} {
+                        from { transform: rotate(0deg) translateX(${planet.distance}px) rotate(0deg); }
+                        to { transform: rotate(360deg) translateX(${planet.distance}px) rotate(-360deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+
+                planetElement.style.animation = `orbit${planet.name} ${planet.period}s linear infinite`;
+
+                // Evento de clic para planetas
+                planetElement.addEventListener('click', () => {
+                    planetName.textContent = planet.name;
+                    planetDescription.textContent = planet.description;
+                    planetFunFact.textContent = planet.funFact;
+                    planetInfo.style.display = 'block';
+                });
+
+                solarSystem.appendChild(planetElement);
+            });
+        }
+
+        createPlanetSystem();
+
+        // Función para zoom
+        function zoomIn() {
+            if (scale < 3) { // Limitar el zoom máximo
+                scale += 0.1;
+                solarSystem.style.transform = `scale(${scale})`;
+            }
+        }
+
+        function zoomOut() {
+            if (scale > 0.5) { // Limitar el zoom mínimo
+                scale -= 0.1;
+                solarSystem.style.transform = `scale(${scale})`;
+            }
+        }
+
+        // Funciones para zoom con el teclado
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '+') {
+                zoomIn();
+            }
+            if (e.key === '-') {
+                zoomOut();
+            }
+        });
+
+        // Cerrar información del planeta
+        planetInfo.addEventListener('click', () => {
+            planetInfo.style.display = 'none';
+        });
+
+    </script>
+</body>
+</html>
